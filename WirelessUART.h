@@ -1,5 +1,5 @@
 /******************************************************************
- * WirelessUART Arduino Library
+ * WirelessUART Arduino Library v 1.00 Beta
  * based on EasyTransfer Arduino Library
  *
  *	dene@bk.ru

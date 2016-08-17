@@ -47,6 +47,9 @@ void WirelessUART::sendData(uint8_t struct_id, uint8_t send_to_id = 0) {
 		_stream->write(*(address + i));
 	}
 	_stream->write(CS);
+	free(rx_buffer);
+
+
 }
 boolean WirelessUART::isValidSender(uint8_t sender_id) {
 	for (int i = 0; i < MAX_NODES_COUNT - 1; i++) {
@@ -99,6 +102,7 @@ boolean WirelessUART::receiveData() {
 
 				if (rx_len != size) {
 					rx_len = 0;
+					free(rx_buffer);
 					return false;
 				}
 			}
@@ -118,12 +122,14 @@ boolean WirelessUART::receiveData() {
 				memcpy(address, rx_buffer, size);
 				rx_len = 0;
 				rx_array_inx = 0;
+				free(rx_buffer);
 				return true;
 			}
 
 			else {
 				rx_len = 0;
 				rx_array_inx = 0;
+				free(rx_buffer);
 				return false;
 			}
 		}
