@@ -11,10 +11,9 @@ void WirelessUART::begin(Stream *theStream, uint8_t device_id) {
 	_stream = theStream;
 	id = device_id;
 }
-void WirelessUART::setStructs(uint8_t* struc_adress, uint8_t stru_size,
-	
-	uint8_t s_id = 0) {
-	if (s_id < 11) {
+void WirelessUART::setStructs(uint8_t* struc_adress, uint8_t stru_size,	uint8_t s_id = 0)
+{
+	if (s_id < MAX_STRUCTS_COUNT) {
 		str_addr[s_id] = struc_adress;
 		str_sizes[s_id] = stru_size;
 	}
@@ -48,11 +47,17 @@ void WirelessUART::sendData(uint8_t struct_id, uint8_t send_to_id = 0) {
 	}
 	_stream->write(CS);
 	free(rx_buffer);
+	
+	if (this->debugMode){
+	Serial.print("Data sended: ");
+	Serial.print(size);
+	Serial.println(" bytes");
+	}
 
 
 }
-boolean WirelessUART::isValidSender(uint8_t sender_id) {
-	for (int i = 0; i < MAX_NODES_COUNT - 1; i++) {
+uint8_t WirelessUART::isValidSender(uint8_t sender_id) {
+	for (int i = 0; i < MAX_NODES_COUNT; i++) {
 		if (sender_id == receiveFrom[i]) {
 			return true;
 		}
@@ -60,10 +65,16 @@ boolean WirelessUART::isValidSender(uint8_t sender_id) {
 	return false;
 }
 
-boolean WirelessUART::receiveData() {
+uint8_t WirelessUART::receiveData() {
+//while (_stream->available()) { Serial.println(_stream->read()); }
 
 	if (rx_len == 0) {
+
+		
+
 		if (_stream->available() >= 6) {
+			
+		
 			while (_stream->read() != 0x06) {
 
 				if (_stream->available() < 6)
@@ -72,18 +83,17 @@ boolean WirelessUART::receiveData() {
 			if (_stream->read() == 0x85) {
 
 				uint8_t _send_to_id = _stream->read(); // read send_to_id
-
-
-				if (_send_to_id != 0)
+			
+			if (_send_to_id != 0)
 				{
 					if (_send_to_id != this->id)
 					{
 						return false;
 					}
 				}
-
+			
 				sender_id = _stream->read(); // read sender id
-
+				
 				if (!receiveFromAll) {
 					if (!(WirelessUART::isValidSender(sender_id))) {
 						return false;
@@ -93,18 +103,33 @@ boolean WirelessUART::receiveData() {
 				struct_id = _stream->read(); // read struct_id id
 				if (str_addr[struct_id] != NULL) {
 					WirelessUART::setVars(struct_id);
+
+					if (this->debugMode) {
+						Serial.print("Income stru ID: ");
+						Serial.println(struct_id);
+					}
+
 				}
 				else {
 					return false;
 				}
+	
 				rx_len = _stream->read();
 				//make sure the binary structs on both Arduinos are the same size.
-
 				if (rx_len != size) {
+					if (this->debugMode) {
+						Serial.print("Structs has different sizes: income stru size: ");
+						Serial.print(rx_len);
+						Serial.print(" local stru size: ");
+						Serial.print(size);
+						Serial.println("\n");
+					}
 					rx_len = 0;
 					free(rx_buffer);
+					
 					return false;
 				}
+								
 			}
 		}
 	}
@@ -137,5 +162,17 @@ boolean WirelessUART::receiveData() {
 	return false;
 }
 
+uint8_t WirelessUART::getStructSize(uint8_t StructID)
+{
+	return str_sizes[StructID];
+}
+void WirelessUART::SetupEnable(byte pin)
+{
+	
+}
+void WirelessUART::sendSetupCommand()
+{
+
+}
 
 
